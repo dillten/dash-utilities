@@ -27,19 +27,6 @@ EOF
 
 sudo pip install -r /tmp/graphite_reqs.txt
 
-#download carbon and graphite
-#cd /opt
-#sudo wget https://github.com/graphite-project/graphite-web/archive/0.9.12.tar.gz
-#sudo mv 0.9.12.tar.gz graphite-web-0.9.12.tar.gz
-#sudo tar -xzf graphite-web-0.9.12.tar.gz
-#sudo ln -s /opt/graphite-web-0.9.12 /opt/graphite
-
-#cd /opt
-#sudo wget https://github.com/graphite-project/carbon/archive/0.9.12.tar.gz
-#sudo mv 0.9.12.tar.gz carbon-0.9.12.tar.gz
-#sudo tar -xzf carbon-0.9.12.tar.gz
-#sudo cp -rf carbon-0.9.12/* /opt/graphite/
-
 #
 # Configure carbon
 #
@@ -93,10 +80,37 @@ sudo apt-get install apache2 apache2-mpm-worker apache2-utils apache2.2-bin apac
 # apache config and startup
 sudo cp /opt/graphite/examples/example-graphite-vhost.conf /etc/apache2/sites-available/default
 sudo cp /opt/graphite/conf/graphite.wsgi.example /opt/graphite/conf/graphite.wsgi
-sudo sed -i 's/run\/wsgi/\/etc\/httpd\/wsgi/' /etc/apache2/sites-available/default
 sudo chown -R www-data:www-data /opt/graphite/storage
+# Update WSGI Directory
 sudo mkdir -p /etc/httpd/wsgi
+sudo sed -i 's/run\/wsgi/\/etc\/httpd\/wsgi/' /etc/apache2/sites-available/default
+# Update configuration to listen on port 8080, we'll replace the default web-ui with Graphana
+sudo sed -i '1 i\Listen 8080' /etc/apache2/sites-available/default
+sudo sed -i 's/*:80/*:8080' /etc/apache2/sites-available/default
 sudo service apache2 restart
+
+# Grafana installation
+cd /tmp
+wget http://grafanarel.s3.amazonaws.com/grafana-1.5.4.tar.gz
+tar -xzf grafana-1.5.4.tar.gz
+sudo cp -rf grafana-1.5.4 /opt/grafana
+
+cat >> /tmp/grafana-web.config << EOF
+<VirtualHost *:80>
+        DocumentRoot "/opt/grafana"
+</VirtualHost>
+EOF
+
+sudo cat /tmp/grafana-web.config >> /etc/apache2/sites-available/default
+
+# ElasticSearch for Grafana dashboards - install from public repo
+cd /tmp
+# Requires Java to run
+sudo apt-get install openjdk-7-jre
+# Elasticsearch repo for 1.2 
+wget -O - http://packages.elasticsearch.org/GPG-KEY-elasticsearch | sudo apt-key add -
+sudo echo 'deb http://packages.elasticsearch.org/elasticsearch/1.2/debian stable main' >> /etc/apt/sources.list
+sudo apt-get install elasticsearch
 
 # Start Carbon
 sudo /opt/graphite/bin/carbon-cache.py start

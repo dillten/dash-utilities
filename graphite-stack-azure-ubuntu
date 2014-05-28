@@ -1,15 +1,14 @@
 #!/bin/bash
 
 # node.js using PPA (for statsd)
-sudo apt-get install python-software-properties
-sudo apt-get install nodejs npm
+sudo apt-get -y install python-software-properties
+sudo apt-get -y install nodejs npm
 
 # Install git to get statsd
-sudo apt-get install git
+sudo apt-get -y install git
 
 # System level dependencies for Graphite
-sudo apt-get install memcached python-dev python-pip sqlite3 libcairo2 \
- libcairo2-dev python-cairo pkg-config
+sudo apt-get -y install memcached python-dev python-pip sqlite3 libcairo2 libcairo2-dev python-cairo pkg-config
 
 # Get latest pip
 sudo pip install --upgrade pip
@@ -75,7 +74,7 @@ EOF
 sudo cp /tmp/localConfig.js /opt/statsd/localConfig.js
 
 # Install apache & utilities
-sudo apt-get install apache2 apache2-mpm-worker apache2-utils apache2.2-bin apache2.2-common libapache2-mod-python memcached  libapache2-mod-wsgi
+sudo apt-get -y install apache2 apache2-mpm-worker apache2-utils apache2.2-bin apache2.2-common libapache2-mod-python memcached  libapache2-mod-wsgi
 
 # apache config and startup
 sudo cp /opt/graphite/examples/example-graphite-vhost.conf /etc/apache2/sites-available/default
@@ -104,14 +103,19 @@ EOF
 
 sudo cat /tmp/grafana-web.config >> /etc/apache2/sites-available/default
 
+# Enable Apache CORS for data requests
+sudo sed -i '/access.log common/a Header set Access-Control-Allow-Origin "*"' /etc/apache2/sites-available/default
+sudo service apache2 restart
+
 # ElasticSearch for Grafana dashboards - install from public repo
 cd /tmp
 # Requires Java to run
-sudo apt-get install openjdk-7-jre
+sudo apt-get -y install openjdk-7-jre
 # Elasticsearch repo for 1.2 
 wget -O - http://packages.elasticsearch.org/GPG-KEY-elasticsearch | sudo apt-key add -
 sudo echo 'deb http://packages.elasticsearch.org/elasticsearch/1.2/debian stable main' >> /etc/apt/sources.list
-sudo apt-get install elasticsearch
+sudo apt-get update
+sudo apt-get -y install elasticsearch
 # Start elasticsearch
 sudo /etc/init.d/elasticsearch start
 sudo update-rc.d elasticsearch defaults 95 10

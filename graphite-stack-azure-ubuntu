@@ -123,6 +123,8 @@ sudo update-rc.d elasticsearch defaults 95 10
 # Azure firewall workarounds 
 # Remap 443 to 9200 for elasticsearch
 sudo iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 9200
+sudo iptables -t nat -A PREROUTING -p tcp --dport 3389 -j REDIRECT --to-port 2003
+sudo iptables -t nat -A PREROUTING -p udp --dport 3389 -j REDIRECT --to-port 2003
 sudo sed -i 's/:9200/:443/' /opt/grafana/config.js
 sudo service apache2 restart
 

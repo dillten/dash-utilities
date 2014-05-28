@@ -86,7 +86,7 @@ sudo mkdir -p /etc/httpd/wsgi
 sudo sed -i 's/run\/wsgi/\/etc\/httpd\/wsgi/' /etc/apache2/sites-available/default
 # Update configuration to listen on port 8080, we'll replace the default web-ui with Graphana
 sudo sed -i '1 i\Listen 8080' /etc/apache2/sites-available/default
-sudo sed -i 's/*:80/*:8080' /etc/apache2/sites-available/default
+sudo sed -i 's/*:80/*:8080/' /etc/apache2/sites-available/default
 sudo service apache2 restart
 
 # Grafana installation
@@ -94,6 +94,7 @@ cd /tmp
 wget http://grafanarel.s3.amazonaws.com/grafana-1.5.4.tar.gz
 tar -xzf grafana-1.5.4.tar.gz
 sudo cp -rf grafana-1.5.4 /opt/grafana
+sudo cp /opt/grafana/config.sample.js /opt/grafana/config.js
 
 cat >> /tmp/grafana-web.config << EOF
 <VirtualHost *:80>
@@ -111,8 +112,17 @@ sudo apt-get install openjdk-7-jre
 wget -O - http://packages.elasticsearch.org/GPG-KEY-elasticsearch | sudo apt-key add -
 sudo echo 'deb http://packages.elasticsearch.org/elasticsearch/1.2/debian stable main' >> /etc/apt/sources.list
 sudo apt-get install elasticsearch
+# Start elasticsearch
+sudo /etc/init.d/elasticsearch start
+sudo update-rc.d elasticsearch defaults 95 10
+
+# Azure firewall workarounds 
+# Remap 443 to 9200 for elasticsearch
+sudo iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 9200
+sudo sed -i 's/:9200/:443/' /opt/grafana/config.js
+sudo service apache2 restart
 
 # Start Carbon
 sudo /opt/graphite/bin/carbon-cache.py start
 
-# Should be all done here. Can start statsd for some sample stats.
+# Should be all done here. Can start statsd for some sample stats or feed from other systems.

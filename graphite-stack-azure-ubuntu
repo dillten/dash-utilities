@@ -121,7 +121,8 @@ sudo /etc/init.d/elasticsearch start
 sudo update-rc.d elasticsearch defaults 95 10
 
 # Azure firewall workarounds 
-# Remap 443 to 9200 for elasticsearch
+# Remap 9200 to 443 for elasticsearch
+# Remap 2003 to 3389 for carbon
 sudo iptables -t nat -A PREROUTING -p tcp --dport 443 -j REDIRECT --to-port 9200
 sudo iptables -t nat -A PREROUTING -p tcp --dport 3389 -j REDIRECT --to-port 2003
 sudo iptables -t nat -A PREROUTING -p udp --dport 3389 -j REDIRECT --to-port 2003
